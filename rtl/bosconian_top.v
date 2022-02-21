@@ -1,5 +1,5 @@
 
-module mycore
+module bosconian_top
 (
 	input         clk,
 	input         reset,

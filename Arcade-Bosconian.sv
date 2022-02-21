@@ -273,7 +273,7 @@ wire VSync;
 wire ce_pix;
 wire [7:0] video;
 
-mycore mycore
+bosconian_top bosconian_top
 (
 	.clk(clk_sys),
 	.reset(reset),
