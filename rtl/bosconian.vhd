@@ -272,11 +272,11 @@ architecture struct of bosconian is
 
  signal romvoice0_cs_n     : std_logic;
  signal romvoice1_cs_n     : std_logic;
- signal romvoice3_cs_n     : std_logic;
+ signal romvoice2_cs_n     : std_logic;
  signal romvoice_addr      : std_logic_vector(11 downto 0);
  signal romvoice0_do       : std_logic_vector( 7 downto 0);
  signal romvoice1_do       : std_logic_vector( 7 downto 0);
- signal romvoice3_do       : std_logic_vector( 7 downto 0);
+ signal romvoice2_do       : std_logic_vector( 7 downto 0);
  signal romvoice_do        : std_logic_vector( 7 downto 0);
 
  signal cs54xx_ena      : std_logic;
@@ -288,7 +288,9 @@ architecture struct of bosconian is
  signal cs5Xxx_1_ena      : std_logic;
  signal cs5Xxx_1_ena_div  : std_logic_vector(5 downto 0) := "000000";
 
- signal cs52xx_ena           : std_logic;
+ signal cs52xx_ena      : std_logic;
+ signal cs52xx_ena_div  : std_logic_vector(3 downto 0) := "0000";
+ 
  signal cs52xx_timer_ena     : std_logic;
  signal cs52xx_timer_ena_div : std_logic_vector(4 downto 0) := "00000";
 
@@ -346,7 +348,7 @@ architecture struct of bosconian is
  signal romchar_wren   : std_logic;
  signal romvoice0_wren : std_logic;
  signal romvoice1_wren : std_logic;
- signal romvoice3_wren : std_logic;
+ signal romvoice2_wren : std_logic;
  signal romcolor_wren  : std_logic;
  signal romradar_wren  : std_logic;
  signal rom50_wren     : std_logic;
@@ -368,7 +370,7 @@ dip_switch_do <= "000000" &
 audio <= ("00" & cs54xx_audio_1_lpf(15 downto 2))
        + ("00" & cs54xx_audio_2_lpf(15 downto 2))
        + ("00" & cs54xx_audio_3_lpf(15 downto 2))
-       + ("00" & cs52xx_audio & "0000")
+       + ("00" & cs52xx_audio & "0000000000")
        + ("0" & snd_audio & "00000");
 
 -- make access slots from 18MHz
@@ -393,12 +395,14 @@ begin
 		video_6Mn_ena   <= '0';
 		ena_snd_machine <= '0';
 		cs54xx_ena      <= '0';
+		cs52xx_ena      <= '0';
 		cs5Xxx_0_ena    <= '0';
 		cs5Xxx_1_ena    <= '0';
 
 		if slot = "101" then
 			slot <= (others => '0');
 			cs54xx_ena_div   <= cs54xx_ena_div   + '1';
+			cs52xx_ena_div   <= cs52xx_ena_div   + '1';
 			cs5Xxx_0_ena_div <= cs5Xxx_0_ena_div + '1';
 			cs5Xxx_1_ena_div <= cs5Xxx_1_ena_div + '1';
 		else
@@ -428,6 +432,11 @@ begin
 			if cs54xx_ena_div = "1011" then
 				cs54xx_ena_div <= "0000";
 				cs54xx_ena <= '1';
+			end if;
+			if cs52xx_ena_div = "1100" then
+				cs52xx_ena_div <= "0000";
+				cs52xx_ena <= '1';
+				cs52xx_timer_ena_div <= cs52xx_timer_ena_div + "00001";
 			end if;
 			if cs5Xxx_0_ena_div = "1100" then
 				cs5Xxx_0_ena_div <= "0000";
@@ -1121,17 +1130,6 @@ port map
 
 -- TODO: Not sure whether this clocking is accurate.
 -- The division by 32 for the timer is a guess, originally made by MAME
-process (clock_18)
-begin
-    if rising_edge(clock_18) then
-        cs52xx_ena <= '0';
-        if slot = "101" then
-            cs52xx_ena <= '1';
-            cs52xx_timer_ena_div <= cs52xx_timer_ena_div + "00001";
-        end if;
-    end if;
-end process;
-
 cs52xx_timer_ena <= '1' when cs52xx_timer_ena_div = "00000" else '0';
 
 cs52xx_k_port_in <= cs52xx_control(3 downto 0);
@@ -1230,34 +1228,32 @@ port map
 	address_b => romvoice_addr(11 downto 0),
 	q_b       => romvoice1_do
 );
-romvoice3 : entity work.dpram generic map (12,8)
+romvoice2 : entity work.dpram generic map (12,8)
 port map
 (
 	clock_a   => clock_18,
-	wren_a    => romvoice3_wren,
+	wren_a    => romvoice2_wren,
 	address_a => dn_addr(11 downto 0),
 	data_a    => dn_data,
 
 	clock_b   => clock_18n,
 	address_b => romvoice_addr(11 downto 0),
-	q_b       => romvoice3_do
+	q_b       => romvoice2_do
 );
 
 romvoice_addr <= cs52xx_ol_port_out & cs52xx_r3_port_out & cs52xx_r2_port_out;
 
 -- In Bosconian, address lines 15-12 (52xx pins 17-20) are direct active-low chip enables.
 -- (In Pole Position, they are the upper bits of the address instead.)
--- Note: the 0/1/3 numbering is intentional. The Bosconian schematic has four speech ROMs,
--- but MAME (and ROM dumps) seem to ignore the third one, 5L.
 romvoice0_cs_n <= cs52xx_oh_port_out(0);
 romvoice1_cs_n <= cs52xx_oh_port_out(1);
-romvoice3_cs_n <= cs52xx_oh_port_out(3);
+romvoice2_cs_n <= cs52xx_oh_port_out(2);
 
 romvoice_do <=
-	      romvoice0_do when romvoice0_cs_n = '0' else
-	      romvoice1_do when romvoice1_cs_n = '0' else
-	      romvoice3_do when romvoice3_cs_n = '0' else
-	      X"00";
+    romvoice0_do when romvoice0_cs_n = '0' else
+    romvoice1_do when romvoice1_cs_n = '0' else
+    romvoice2_do when romvoice2_cs_n = '0' else
+    X"00";
 
 -- Audio low pass filters. Sample rate of 46 875 Mhz has enough resolution for 0.001 MF capacitance
 
@@ -1322,7 +1318,7 @@ romsprite_wren <= '1' when dn_wr = '1' and dn_addr(15 downto 12) = "1000"     el
 -- ROMs for digitized speech; used by 52xx
 romvoice0_wren <= '1' when dn_wr = '1' and dn_addr(15 downto 12) = "1010"     else '0';
 romvoice1_wren <= '1' when dn_wr = '1' and dn_addr(15 downto 12) = "1011"     else '0';
-romvoice3_wren <= '1' when dn_wr = '1' and dn_addr(15 downto 12) = "1100"     else '0';
+romvoice2_wren <= '1' when dn_wr = '1' and dn_addr(15 downto 12) = "1100"     else '0';
 -- Namco custom MCU ROMs
 rom50_wren     <= '1' when dn_wr = '1' and dn_addr(15 downto 11) = "11010"    else '0';
 rom51_wren     <= '1' when dn_wr = '1' and dn_addr(15 downto 10) = "110110"   else '0';
