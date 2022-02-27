@@ -1,4 +1,9 @@
 //============================================================================
+//  Arcade: Bosconian
+//
+//  Port to MiSTer
+//  Copyright (C) 2021 Nolan Nicholson
+//  Based on MiSTer Galaga port by Sorgelig, Dar, Blackwine, and others
 //
 //  This program is free software; you can redistribute it and/or modify it
 //  under the terms of the GNU General Public License as published by the Free
@@ -13,9 +18,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with this program; if not, write to the Free Software Foundation, Inc.,
 //  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-//
 //============================================================================
-
 module emu
 (
 	//Master input clock
@@ -170,73 +173,123 @@ module emu
 	input         OSD_STATUS
 );
 
-///////// Default values for ports not used in this core /////////
-
-assign ADC_BUS  = 'Z;
-assign USER_OUT = '1;
-assign {UART_RTS, UART_TXD, UART_DTR} = 0;
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
+assign {UART_RTS, UART_TXD, UART_DTR} = 0;
 assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQMH, SDRAM_nWE, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nCS} = 'Z;
-assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;  
 
-assign VGA_SL = 0;
-assign VGA_F1 = 0;
-assign VGA_SCALER = 0;
-assign HDMI_FREEZE = 0;
-
-assign AUDIO_S = 0;
-assign AUDIO_L = 0;
-assign AUDIO_R = 0;
-assign AUDIO_MIX = 0;
-
-assign LED_DISK = 0;
+assign VGA_F1    = 0;
+assign VGA_SCALER= 0;
+assign USER_OUT  = '1;
+assign LED_USER  = ioctl_download;
+assign LED_DISK  = 0;
 assign LED_POWER = 0;
-assign BUTTONS = 0;
+assign BUTTONS   = 0;
+assign AUDIO_MIX = 0;
+assign HDMI_FREEZE = 0;
+assign FB_FORCE_BLANK = 0;
 
-//////////////////////////////////////////////////////////////////
+wire [1:0] ar = status[23:22];
 
-wire [1:0] ar = status[9:8];
-
-assign VIDEO_ARX = (!ar) ? 12'd4 : (ar - 1'd1);
-assign VIDEO_ARY = (!ar) ? 12'd3 : 12'd0;
+assign VIDEO_ARX = (!ar) ? ((status[2] ) ? 8'd4 : 8'd3) : (ar - 1'd1);
+assign VIDEO_ARY = (!ar) ? ((status[2] ) ? 8'd3 : 8'd4) : 12'd0;
 
 `include "build_id.v" 
 localparam CONF_STR = {
-	"MyCore;;",
+	"Galaga;;",
+	"-,-= Analogue video output =-;",
+	"OOR,H-sync Adjust,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
+	"OSV,V-sync Adjust,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
+	"O8,Flip Screen,Off,On;",
+	"O35,Scandoubler FX,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+	"H0-;",
+	"H0-,-= Digital video output =-;",
+	"H0OMN,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
+	"H0O2,Orientation,Vertical,Horizontal;",
 	"-;",
-	"O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
-	"O2,TV Mode,NTSC,PAL;",
-	"O34,Noise,White,Red,Green,Blue;",
+	"H1OC,Autosave Hiscores,Off,On;",
+	"P1,Pause options;",
+	"P1OA,Pause when OSD is open,On,Off;",
+	"P1OB,Dim video after 10s,On,Off;",
 	"-;",
-	"P1,Test Page 1;",
-	"P1-;",
-	"P1-, -= Options in page 1 =-;",
-	"P1-;",
-	"P1O5,Option 1-1,Off,On;",
-	"d0P1F1,BIN;",
-	"H0P1O6,Option 1-2,Off,On;",
-	"-;",
-	"P2,Test Page 2;",
-	"P2-;",
-	"P2-, -= Options in page 2 =-;",
-	"P2-;",
-	"P2S0,DSK;",
-	"P2O67,Option 2,1,2,3,4;",
-	"-;",
-	"-;",
-	"T0,Reset;",
-	"R0,Reset and close OSD;",
-	"V,v",`BUILD_DATE 
+	"DIP;",
+	"R0,Reset;",
+	"J1,Fire,Start 1P,Start 2P,Coin,Pause;",
+	"jn,A,Start,Select,R,L;",
+
+	"V,v",`BUILD_DATE
 };
 
-wire forced_scandoubler;
-wire  [1:0] buttons;
+reg [7:0] dsw[4];
+always @(posedge clk_sys)
+	if (ioctl_wr && (ioctl_index==254) && !ioctl_addr[24:2])
+		dsw[ioctl_addr[1:0]] <= ioctl_dout;
+
+////////////////////   CLOCKS   ///////////////////
+
+wire clk_sys, clk_12m, clk_24m, clk_48m;
+wire pll_locked;
+
+pll pll
+(
+	.refclk(CLK_50M),
+	.rst(0),
+	.outclk_0(clk_48m),
+	.outclk_1(clk_24m),
+	.outclk_2(clk_sys),
+	.outclk_3(clk_12m),
+	.locked(pll_locked)
+);
+
+///////////////////////////////////////////////////
+
 wire [31:0] status;
-wire [10:0] ps2_key;
+wire [15:0] status_menumask = {14'h0,~hs_configured,direct_video};
+wire  [1:0] buttons;
+wire        forced_scandoubler;
+wire        direct_video;
+
+wire        ioctl_download;
+wire        ioctl_upload;
+wire        ioctl_upload_req;
+wire        ioctl_wr;
+wire [24:0] ioctl_addr;
+wire  [7:0] ioctl_dout;
+wire  [7:0] ioctl_din;
+wire  [7:0] ioctl_index;
+
+wire [15:0] joystick_0, joystick_1;
+wire [15:0] joy = joystick_0 | joystick_1;
+
+wire [21:0] gamma_bus;
 
 hps_io #(.CONF_STR(CONF_STR)) hps_io
 (
 	.clk_sys(clk_sys),
+	.HPS_BUS(HPS_BUS),
+
+	.buttons(buttons),
+	.status(status),
+	.status_menumask(status_menumask),
+	.forced_scandoubler(forced_scandoubler),
+	.gamma_bus(gamma_bus),
+	.direct_video(direct_video),
+
+	.ioctl_upload(ioctl_upload),
+	.ioctl_upload_req(ioctl_upload_req),
+	.ioctl_download(ioctl_download),
+	.ioctl_wr(ioctl_wr),
+	.ioctl_addr(ioctl_addr),
+	.ioctl_dout(ioctl_dout),
+	.ioctl_din(ioctl_din),
+	.ioctl_index(ioctl_index),
+
+	.joystick_0(joystick_0),
+	.joystick_1(joystick_1)
+);
+
+/* new:
+
+(
 	.HPS_BUS(HPS_BUS),
 	.EXT_BUS(),
 	.gamma_bus(),
@@ -249,60 +302,159 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 	
 	.ps2_key(ps2_key)
 );
+*/
 
-///////////////////////   CLOCKS   ///////////////////////////////
 
-wire clk_sys;
-pll pll
-(
-	.refclk(CLK_50M),
-	.rst(0),
-	.outclk_0(clk_sys)
+wire no_rotate = status[2] | direct_video;
+
+wire m_up     = joy[3];
+wire m_down   = joy[2];
+wire m_left   = joy[1];
+wire m_right  = joy[0];
+wire m_fire   = joy[4];
+
+wire m_start1 = joystick_0[5] | joystick_1[6];
+wire m_start2 = joystick_1[5] | joystick_0[6];
+wire m_coin1  = joystick_0[7];
+wire m_coin2  = joystick_1[7];
+wire m_pause  = joy[8];
+
+// PAUSE SYSTEM
+wire				pause_cpu;
+wire 				dim_video;
+wire [7:0]		rgb_out;
+pause #(3,3,2,18) pause (
+	.*,
+	.user_button(m_pause),
+	.rgb_out(),
+`ifdef PAUSE_OUTPUT_DIM
+	.dim_video(dim_video),
+`endif
+	.pause_request(hs_pause),
+	.options(~status[11:10])
 );
 
-wire reset = RESET | status[0] | buttons[1];
+reg ce_pix;
+reg HSync,VSync,HBlank,VBlank;
+always @(posedge clk_48m) begin
+	reg [2:0] div;
+	div <= div + 1'd1;
 
-//////////////////////////////////////////////////////////////////
+	ce_pix <= !div;
 
-wire [1:0] col = status[4:3];
-
-wire HBlank;
-wire HSync;
-wire VBlank;
-wire VSync;
-wire ce_pix;
-wire [7:0] video;
-
-bosconian_top bosconian_top
-(
-	.clk(clk_sys),
-	.reset(reset),
+	rgb_out = dim_video ? {r >> 1,g >> 1, b >> 1} : {r,g,b};
 	
-	.pal(status[2]),
-	.scandouble(forced_scandoubler),
+	HSync <= ~hsync_n;
+	VSync <= ~vsync_n;
+	HBlank <= ~hblank_n;
+	VBlank <= ~vblank_n;
+end
 
-	.ce_pix(ce_pix),
+wire hblank_n,vblank_n,hsync_n,vsync_n;
+wire [2:0] r,g;
+wire [1:0] b;
 
-	.HBlank(HBlank),
-	.HSync(HSync),
-	.VBlank(VBlank),
-	.VSync(VSync),
+arcade_video #(288,8) arcade_video
+(
+	.*,
 
-	.video(video)
+	.clk_video(clk_48m),
+	.RGB_in(rgb_out),
+
+	.fx(status[5:3])
 );
 
-assign CLK_VIDEO = clk_sys;
-assign CE_PIXEL = ce_pix;
+wire [15:0] audio;
+assign AUDIO_L = audio;
+assign AUDIO_R = AUDIO_L;
+assign AUDIO_S = 0;
 
-assign VGA_DE = ~(HBlank | VBlank);
-assign VGA_HS = HSync;
-assign VGA_VS = VSync;
-assign VGA_G  = (!col || col == 2) ? video : 8'd0;
-assign VGA_R  = (!col || col == 1) ? video : 8'd0;
-assign VGA_B  = (!col || col == 3) ? video : 8'd0;
 
-reg  [26:0] act_cnt;
-always @(posedge clk_sys) act_cnt <= act_cnt + 1'd1; 
-assign LED_USER    = act_cnt[26]  ? act_cnt[25:18]  > act_cnt[7:0]  : act_cnt[25:18]  <= act_cnt[7:0];
+wire rom_download = ioctl_download & !ioctl_index;
+wire reset = (RESET | status[0] | buttons[1] | rom_download);
+
+bosconian bosconian
+(
+	.clock_18(clk_sys),
+	.reset(reset),
+
+	.dn_addr(ioctl_addr[16:0]),
+	.dn_data(ioctl_dout),
+	.dn_wr(ioctl_wr & rom_download),
+
+	.video_r(r),
+	.video_g(g),
+	.video_b(b),
+	.video_hsync_n(hsync_n),
+	.video_vsync_n(vsync_n),
+  .video_hblank_n(hblank_n),
+  .video_vblank_n(vblank_n),
+
+	.audio(audio),
+
+	.self_test(dsw[2][0]),
+	.service(dsw[2][1]),
+
+	.coin1(m_coin1),
+	.coin2(m_coin2),
+
+	.start1(m_start1),
+	.up1(m_up),
+	.down1(m_down),
+	.left1(m_left),
+	.right1(m_right),
+	.fire1(m_fire),
+
+	.start2(m_start2),
+	.up2(m_up),
+	.down2(m_down),
+	.left2(m_left),
+	.right2(m_right),
+	.fire2(m_fire),
+
+	.dip_switch_a(~dsw[0]),
+	.dip_switch_b(~dsw[1]),
+
+	.h_offset(status[27:24]),
+	.v_offset(status[31:28]),
+	.pause(pause_cpu)
+);
+
+
+// HISCORE SYSTEM
+// --------------
+// NOTE: Scores are not written to RAM after a reset, reason as yet unknown
+wire [15:0]hs_address;
+wire [7:0] hs_data_in;
+wire [7:0] hs_data_out;
+wire hs_write_enable;
+wire hs_pause;
+wire hs_configured;
+
+// TODO hiscore disabled for initial core development
+assign hs_pause = 0;
+/*
+hiscore #(
+	.HS_ADDRESSWIDTH(16),
+	.CFG_ADDRESSWIDTH(2),
+	.CFG_LENGTHWIDTH(2)
+) hi (
+	.*,
+	.clk(clk_sys),
+	.paused(pause_cpu),
+	.autosave(status[12]),
+	.ram_address(hs_address),
+	.data_from_ram(hs_data_out),
+	.data_to_ram(hs_data_in),
+	.data_from_hps(ioctl_dout),
+	.data_to_hps(ioctl_din),
+	.ram_write(hs_write_enable),
+	.ram_intent_read(),
+	.ram_intent_write(),
+	.pause_cpu(hs_pause),
+	.configured(hs_configured)
+);
+*/
+
 
 endmodule
