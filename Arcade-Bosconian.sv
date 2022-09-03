@@ -2,7 +2,7 @@
 //  Arcade: Bosconian
 //
 //  Port to MiSTer
-//  Copyright (C) 2021 Nolan Nicholson
+//  Copyright (C) 2022 Nolan Nicholson
 //  Based on MiSTer Galaga port by Sorgelig, Dar, Blackwine, and others
 //
 //  This program is free software; you can redistribute it and/or modify it
@@ -52,6 +52,7 @@ module emu
 	output        VGA_F1,
 	output [1:0]  VGA_SL,
 	output        VGA_SCALER, // Force VGA scaler
+	output        VGA_DISABLE, // analog out is off
 
 	input  [11:0] HDMI_WIDTH,
 	input  [11:0] HDMI_HEIGHT,
@@ -173,20 +174,23 @@ module emu
 	input         OSD_STATUS
 );
 
+assign USER_OUT  = '1;
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
 assign {UART_RTS, UART_TXD, UART_DTR} = 0;
 assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQMH, SDRAM_nWE, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nCS} = 'Z;
 
 assign VGA_F1    = 0;
-assign VGA_SCALER= 0;
-assign USER_OUT  = '1;
+assign VGA_SCALER  = 0;
+assign VGA_DISABLE = 0;
+assign HDMI_FREEZE = 0;
+
 assign LED_USER  = ioctl_download;
+assign AUDIO_MIX = 0;
+assign FB_FORCE_BLANK = 0;
+
 assign LED_DISK  = 0;
 assign LED_POWER = 0;
 assign BUTTONS   = 0;
-assign AUDIO_MIX = 0;
-assign HDMI_FREEZE = 0;
-assign FB_FORCE_BLANK = 0;
 
 wire [1:0] ar = status[23:22];
 
@@ -195,7 +199,7 @@ assign VIDEO_ARY = (!ar) ? ((status[2] ) ? 8'd3 : 8'd4) : 12'd0;
 
 `include "build_id.v" 
 localparam CONF_STR = {
-	"Galaga;;",
+	"Bosconian;;",
 	"-,-= Analogue video output =-;",
 	"OOR,H-sync Adjust,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
 	"OSV,V-sync Adjust,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
