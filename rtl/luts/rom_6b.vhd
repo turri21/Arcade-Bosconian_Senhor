@@ -13,42 +13,43 @@
 -- Version 1.0
 -- SVN: $Id$
 --
+----------------------------------------------------------------------------------
+-- Redistribution and use in source and synthesized forms, with or without
+-- modification, also in projects with different (but compatible) licenses,
+-- are permitted provided that the following conditions are met:
+--
+-- * Redistributions of source code must retain the above copyright notice,
+--   this list of conditions, a modification note and the following disclaimer.
+--
+-- * Redistributions in synthesized form must reproduce the above copyright
+--   notice, this list of conditions and the following disclaimer in the
+--   documentation or other materials provided with the distribution.
+--
+-- * The code must not be used for commercial purposes or re-licensed without
+--   specific prior written permission of the author and contributors. It is
+--   strictly for private use in hobby projects, without commercial interests.
+--
+-- * A person redistributing this code or any work products in private or 
+--   public is also responsible for any legal issues which may arise by that.
+--
+-- Please feel free to report bugs to the author, but before you do so, please
+-- make sure that this is not a derivative work and that you have the latest 
+-- version of this file. 
 -------------------------------------------------------------------------------
--- Redistribution and use in source or synthesized forms are permitted
--- provided that the following conditions are met (or a prior written
--- permission was given otherwise):
+-- DISCLAIMER
 --
--- * Redistributions of source code must retain this original header
---   incl. author, contributors, conditions, copyright and disclaimer.
---
--- * Redistributions in synthesized (binary) form must also contain
---   the soure code according to this conditions to keep it "open".
---
--- * Neither the name of the author nor the names of contributors may
---   be used to endorse or promote products derived from this code.
---
--- * This code is only allowed to be used on:
---   - Replay hardware (from fpgaarcade.com)
---
--- * Feedback or bug reports are welcome, but please check on the 
---   web sites given in the header first for any updates available.
---
--- * You are responsible for any legal issues arising from your use
---   or your own distribution of this code.
-----------------------------------------------------------------------
--- THIS CODE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
--- "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
--- LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
--- FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
--- AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
--- INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
--- (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
--- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
--- HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
--- STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
--- ARISING IN ANY WAY OUT OF THE USE OF THIS  CODE OR ANY WORK
--- PRODUCTS, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-----------------------------------------------------------------------
+-- THIS CODE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+-- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+-- THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE
+-- LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+-- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+-- INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+-- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+-- ARISING IN ANY WAY OUT OF THE USE OF THIS CODE, EVEN IF ADVISED OF THE
+-- POSSIBILITY OF SUCH DAMAGE.
+----------------------------------------------------------------------------------
 
 library ieee;
   use ieee.std_logic_1164.all;

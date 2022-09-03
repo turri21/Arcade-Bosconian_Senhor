@@ -3,35 +3,32 @@
 -- 05xx: Namco starfield generator for CPLDs, implementation matches
 --       real custom chips using the correct LFSR and output decoding.
 --
--- (c) copyright 2013 by W. Scherr, www.pin4.at
---                                  ws_arcade@pin4.at
+-- (c) copyright 2013 by W. Scherr, www.pin4.at, ws_arcade@pin4.at
 --
 -- $Id$
 --
 -------------------------------------------------------------------------------
--- Redistribution and use in source and synthezised forms, with or without
--- modification, are permitted provided that the following conditions are met:
+-- Redistribution and use in source and synthesized forms, with or without
+-- modification, also in projects with different (but compatible) licenses,
+-- are permitted provided that the following conditions are met:
 --
--- Redistributions of source code must retain the above copyright notice,
--- this list of conditions, a modification note and the following disclaimer.
+-- * Redistributions of source code must retain the above copyright notice,
+--   this list of conditions, a modification note and the following disclaimer.
 --
--- Redistributions in synthesized form must reproduce the above copyright
--- notice, this list of conditions and the following disclaimer in the
--- documentation and/or other materials provided with the distribution.
+-- * Redistributions in synthesized form must reproduce the above copyright
+--   notice, this list of conditions and the following disclaimer in the
+--   documentation or other materials provided with the distribution.
 --
--- Neither the name of the author nor the names of other contributors may
--- be used to endorse or promote products derived from this software without
--- specific prior written permission.
+-- * The code must not be used for commercial purposes or re-licensed without
+--   specific prior written permission of the author and contributors. It is
+--   strictly for private use in hobby projects, without commercial interests.
 --
--- The code must not be used for commercial purposes without specific prior
--- written permission of the author.
---
--- Not to be used by other hardware than FPGAARCADE boards without written
--- permission of the author.
+-- * A person redistributing this code or any work products in private or 
+--   public is also responsible for any legal issues which may arise by that.
 --
 -- Please feel free to report bugs to the author, but before you do so, please
 -- make sure that this is not a derivative work and that you have the latest 
--- version of this file.
+-- version of this file. 
 -------------------------------------------------------------------------------
 -- DISCLAIMER
 --
