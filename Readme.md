@@ -1,48 +1,65 @@
-# Template core for MiSTer
+# Bosconian
 
-## General description
-This core contains the latest version of framework and will be updated when framework is updated. There will be no releases. This core is only for developers. Besides the framework, core demonstrates the basic usage. New or ported cores should use it as a template.
-
-It's highly recommended to follow the notes to keep it standardized for easier maintenance and collaboration with other developers.
-
-## Source structure
-
-### Legend:
-* `<core_name>` - you have to use the same name where you see this in this manual. Basically it's your core name.
-
-### Standard MiSTer core should have following folders:
-* `sys` - the framework. Basically it's prohibited to change any files in this folder. Framework updates may erase any customization in this folder. All MiSTer cores have to include sys folder as is from this core.
-* `rtl` - the actual source of core. It's up to the developer how to organize the inner structure of this folder. Exception is pll folder/files (see below).
-* `releases` - the folder where rbf files should be placed. format of each rbf is: <core_name>_YYYYMMDD.rbf (YYYYMMDD is date code of release).
-
-### Other standard files:
-* `<core_name>.qpf`- quartus project file. Copy it as is and then modify the line `PROJECT_REVISION = "<core_name>"` according to your core name.
-* `<core_name>.qsf` - quartus settings file. In most cases you don't need to modify anything inside (although you may wont to adjust some settings in quartus - this is fine, but keep changes minimal). You also need to watch this file before you make a commit. Quartus in some conditions may "spit" all settings from different files into this file so it will become large. If you see this, then simply revert it to original file.
-* `<core_name>.srf` - optional file to disable some warnings which are safe to disable and make message list more clean, so you will have less chance to miss some improtant warnings. You are free to modify it.
-* `<core_name>.sdc` - optional file for constraints in case if core require some special constraints. You are free to modify it.
-* `<core_name>.sv` - glue logic between framework and core. This is where you adapt core specific signals to framework.
-* `files.qip` - list of all core files. You need to edit it manually to add/remove files. Quartus will use this file but can't edit it. If you add files in Quartus IDE, then they will be added to `<core_name>.qsf` which is recommended manually move them to `files.qip`.
-* `clean.bat` - windows batch file to clean the whole project from temporary files. In most cases you don't need to modify it.
-* `.gitignore` - list of files should be ignored by git, so temprorary files wont be included in commits.
-* `jtag.cdf` - it will be produced when you compile the core. By clicking it in Quartus IDE, you will launch programmer where you can send the core to MiSTer over USB blaster cable (see manual for DE10-nano how to connect it). This file normally is not presend on cleaned project and not includede in commits.
-
-### PLL:
-Framework implies use of at least one PLL in the core. Framework doesn't comtain this PLL but requires it to be placed in `rtl` folder, so `pll` folder and `pll.v`, `pll.qip` files must be present, however PLL settings are up to the core.
-
-### Verilog Macros
-
-The following macros can be defined and will affect the framework features:
-
-Macro          |   Effect
----------------|---------------------------------
-ARCADE_SYS     | Disables the UART and OSD status
-DEBUG_NOHDMI   | Disable HDMI-related modules. Speeds up compilation but only analogue/direct video is available
-DUAL_SDRAM     | Changes configuration of FPGA pins to work with dual SDRAM I/O boards
-USE_DDRAM      | Enables DDRAM ports of emu instance
-USE_SDRAM      | Enables SDRAM ports of emu instance
-USE_FB         | Allows to use framebuffer from the core
+FPGA implementation of the arcade game Bosconian - Star Destroyer, developed in
+1981 by Namco and released to Western audiences by Midway.
 
 
-# Quartus version
-Cores must be developed in **Quartus v17.0.x**. It's recommended to have updates, so it will be **v17.0.2**. Newer versions won't give any benefits to FPGA used in MiSTer, however they will introduce incompatibilities in project settings and it will make harder to maintain the core and collaborate with others. **So please stick to good old 17.0.x version.** You may use either Lite or Standard license.
+## Credits
 
+* Nolan Nicholson: FPGA implementation of overall Bosconian system from the
+  Midway service schematics - particularly the video board.
+* Dar: FPGA implementation of Galaga, from which much of this core was
+  adapted - particularly the logic board.
+* Wolfgang Scherr: Implementations of several LUTs and Namco customs, including
+  the 05xx starfield generator, plus a hint to the operation of the 52xx voice
+  chip.
+* Mike Johnson: Implementations of several Namco customs, including the 07xx sync
+  generator, plus a lot of legwork originally done for the FPGAArcade project.
+* Daniel Wallner: T80/T80se, a Z80 compatible CPU.
+* MAME: Information on memory mapping, Namco customs, and general information.
+* Alexey Melnikov: MiSTer framework.
+
+
+## Game Information
+
+Bosconian is a top-down 8-directional shooter. The goal of the game is to
+destroy all enemy bases in each level while fighting off enemy ships.
+
+Bosconian is the first top-down shooter that allowed diagonal movement, and one
+of the earliest arcade games with recorded voice sounds. For comparison, Pole
+Position came out later in 1982, and Sinister came out in 1983.
+
+Please note the following about Bosconian's DIP settings:
+* The DIP settings differ between the Namco and Midway versions.
+* The bonus DIP levels have different meanings based on the lives DIP levels. In
+  particular, the bonus DIPs will mean something different for starting with 5
+  lives, compared to starting with only 1, 2, or 3.
+
+
+## Required files
+
+ROMs are not included. In order to use this arcade, you need to provide the
+correct ROMs.
+
+To simplify the process .mra files are provided in the releases folder, that
+specifies the required ROMs with checksums. The ROMs .zip filename refers to the
+corresponding file of the M.A.M.E. project.
+
+Please refer to
+[Arcade ROMS](https://github.com/MiSTer-devel/Main_MiSTer/wiki/Arcade-Roms)
+for information on how to setup and use the environment.
+
+Quick reference for folders and file placement:
+
+ * `/_Arcade/<game name>.mra`
+ * `/_Arcade/cores/<game rbf>.rbf`
+ * `/games/mame/<mame rom>.zip`
+ * `/games/hbmame/<hbmame rom>.zip`
+
+
+## Known Issues
+
+* Pausing at particular moments may cause a crash.
+* Shot and explosion sounds are not working perfectly:
+    * Base explosion sound is not nearly loud enough.
+    * Shot sound changes pitch from shot to shot.
