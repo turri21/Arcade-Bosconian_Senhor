@@ -63,3 +63,4 @@ Quick reference for folders and file placement:
 * Shot and explosion sounds are not working perfectly:
     * Base explosion sound is not nearly loud enough.
     * Shot sound changes pitch from shot to shot.
+* Continues (insert new coin after dying) may not be working properly.
