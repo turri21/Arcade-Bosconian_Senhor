@@ -1,3 +1,8 @@
+-=(Bosconian_Senhor notes)=-
+
+Tested: Working Video 720p, 1080p & Sound
+
+___
 # Bosconian
 
 FPGA implementation of the arcade game Bosconian - Star Destroyer, developed in
